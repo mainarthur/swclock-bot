@@ -19,5 +19,10 @@
   "bugs": {
     "url": "https://gitlab.com/helvete666/swclock-bot/issues"
   },
-  "homepage": "https://gitlab.com/helvete666/swclock-bot#README"
+  "homepage": "https://gitlab.com/helvete666/swclock-bot#README",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "nedb-promise": "^2.0.1",
+    "node-telegram-bot-api": "^0.40.0"
+  }
 }
