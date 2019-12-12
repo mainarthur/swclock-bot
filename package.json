@@ -1,0 +1,23 @@
+{
+  "name": "swclock",
+  "version": "1.0.0",
+  "description": "Telegram Bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/helvete666/swclock-bot.git"
+  },
+  "keywords": [
+    "telegram",
+    "bot"
+  ],
+  "author": "MasterArthur",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/helvete666/swclock-bot/issues"
+  },
+  "homepage": "https://gitlab.com/helvete666/swclock-bot#README"
+}
