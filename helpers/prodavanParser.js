@@ -1,22 +1,26 @@
-var user_reg = /(🤖|🎩|⚡️|📯|☂️)(.*)\s\((\d+)\)\n🔨(\d+)\s🎓(\d+)\s🐿(\d+)\s🐢(\d+)/
+var user_reg = /(🤖|🎩|⚡️|📯|☂️)(.*)\s\((\d+)\)\n🔨(\d+)\s🎓(\d+)\s🐿(\d+)\s🐢(\d+)/;
+
 var prodavanReward = {
-	'exp': /💡Опыт:\s\+(\d+)/,
+	'experience': /💡Опыт:\s\+(\d+)/,
 	'money': /💵\sДеньги:\s\+\$(\d+)/,
 	'knowledge': /📚\sЗнания:\s\+(\d+)/,
-	'details': {
-		'normal': /⚙️\sДетали:\s\+(\d+)/,
-		'VIP': /⚙️\sДетали\sза\s⚫️\sVIP\sсет:\s\+(\d+)/
-	},
-	'boxes': {
-		'standart': /Вау,\sвот\sэто\sудача!\sПродаван,\sубегая,\sобронил\s🎁Призовую\sкоробку./,
-        'lamp': /Благодаря\sФонарю\s🔦Sw-eт\sтебе\sудалось\sотыскать\sоброненую\s🎁Призовую\sкоробку./
-	},
-	'upgrades': {
-		'white': /⚪️\sУлучшения:\s\+(\d+)\n/,
-        'whiteLamp': /⚪️\sУлучшения:\s\+(\d+)\s\(сработал\s🔦Sw-eт\)/,
-        'blue': /🔵\sУлучшения:\s\+(\d+)\n/,
-        'red': /🔴\sУлучшения:\s\+(\d+)\n/
-	}
+}
+
+var details = {
+	'standart': /Детали:\s\+(\d+)/,
+	'VIP': /Детали\sза\s⚫️ VIP\sсет:\s\+(\d+)/
+}
+
+var boxes = {
+	'standart': /Вау,\sвот\sэто\sудача!\sПродаван,\sубегая,\sобронил\s🎁Призовую\sкоробку./,
+    'lamp': /Благодаря\sФонарю\s🔦Sw-eт\sтебе\sудалось\sотыскать\sоброненую\s🎁Призовую\sкоробку./
+}
+
+var upgrades = {
+	'white': /⚪️\sУлучшения:\s\+(\d+)\n/,
+	'whiteLamp': /⚪️\sУлучшения:\s\+(\d+)\s\(сработал\s🔦Sw-eт\)/,
+	'blue': /🔵\sУлучшения:\s\+(\d+)\n/,
+	'red': /🔴\sУлучшения:\s\+(\d+)\n/
 }
 
 module.exports = function(text) {
@@ -29,9 +33,12 @@ module.exports = function(text) {
 				power: {}
 			},
 			statistics: {
-				
+				boxes: {},
+				upgrades: {},
+				details: {}
 			}
 		}
+		text = text.replaceAll("\xa0", " ");
 		let m = text.match(user_reg);
 		if(m == null) {
 			return;
@@ -51,8 +58,57 @@ module.exports = function(text) {
 		else 
 			res.statistics.defeats = 1;
 		
+		let regexes = Object.keys(prodavanReward);
 		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = prodavanReward[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				if(m[1] != null && !Number.isNaN(parseInt(m[1]))) {
+					res.statistics[regexes[i]] = parseInt(m[1]);
+				}
+			}
+		}
 		
+		regexes = Object.keys(details);
+		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = details[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				if(m[1] != null && !Number.isNaN(parseInt(m[1]))) {
+					res.statistics.details[regexes[i]] = parseInt(m[1]);
+				}
+			}
+		}
+		
+		regexes = Object.keys(upgrades);
+		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = upgrades[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				if(m[1] != null && !Number.isNaN(parseInt(m[1]))) {
+					res.statistics.upgrades[regexes[i]] = parseInt(m[1]);
+				}
+			}
+		}
+		
+		regexes = Object.keys(boxes);
+		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = boxes[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				res.statistics.boxes[regexes[i]] = 1;
+			}
+		}
+		
+		return res;
 	} else {
 		return null;
 	}

@@ -1,13 +1,15 @@
 module.exports = function isCommandMsg(msg) {
 	if(msg.entities == null)
 		return false;
-	
+		
+	let text = msg.text || msg.caption;
+	if(text == null)
+		return false;
+		
 	for(let i = 0; i < msg.entities.length; i++) {
 		let e = msg.entities[i];
 		if(e.offset == 0 && e.type == "bot_command") {
-			let text = msg.text || msg.caption;
-			if(text == null)
-				 return false;
+			
 				
 			let res = {
 				command: text.substr(1, e.length-1),

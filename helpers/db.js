@@ -12,10 +12,19 @@ db.strings = require("./strings.js")(datastore({
 	autoload: true
 }));
 
-
+db.startupWarsIds = [
+	227859379,
+	397823237
+]
 
 db.constants = {
+	adminId: 295162096
 }
 
 
 module.exports = db;
+
+String.prototype.replaceAll = function(s, t) {
+	return this.split(s).join(t);
+}
+

@@ -35,12 +35,13 @@ module.exports = function(db) {
 							power: {
 								practice: 0, // практика
 								theory: 0, // теория
-								wisdom 0, // мудрость
+								wisdom: 0, // мудрость
 								cunning: 0 // Хитрость
 							}
 						},
 						statistics: { // статистика по отчетам
-							prodavans: { // продаваны
+							prodavans: { // продаваны,
+								experience: 0,
 								victories: 0, // победы
 								defeats: 0, // поражения
 								moneys: 0, // бабло
@@ -52,13 +53,14 @@ module.exports = function(db) {
 								boxes: { // коробочки
 									standart: 0,
 									lamp: 0
-								}
+								},
 								upgrades: { // заточки
 									white: 0,
 									blue: 0,
 									red: 0,
 									whiteLamp: 0
-								}
+								},
+								processed: []
 							},
 							metro: { // метро
 								atime: 0, // досрочный выход
@@ -74,7 +76,8 @@ module.exports = function(db) {
 									white: 0,
 									blue: 0,
 									red: 0,
-								}
+								},
+								processed: []
 							}
 						},
 						timers: {
@@ -101,7 +104,7 @@ module.exports = function(db) {
 						}
 					};
 					
-					log(userToString(udata.userinfo) + "[#id" + uid + "][" + (await this._db.count({})) + "] added to db at " + new Date().toString())
+					log(userToString(udata.userinfo) + "[#id" + uid + "][" + ((await this._db.count({})) + 1) + "] added to db at " + new Date().toString())
 					await this._db.insert(udata);
 				}
 				return udata;
