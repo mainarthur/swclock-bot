@@ -44,7 +44,7 @@ module.exports = function(db) {
 								experience: 0,
 								victories: 0, // победы
 								defeats: 0, // поражения
-								moneys: 0, // бабло
+								money: 0, // бабло
 								knowledge: 0, // знания
 								details: { // детальки
 									standart: 0,
@@ -59,8 +59,7 @@ module.exports = function(db) {
 									blue: 0,
 									red: 0,
 									whiteLamp: 0
-								},
-								processed: []
+								}
 							},
 							metro: { // метро
 								atime: 0, // досрочный выход
@@ -98,6 +97,42 @@ module.exports = function(db) {
 								jobId: 0
 							},
 							prodavan: {
+								status: false,
+								jobId: 0
+							},
+							box: {
+								status: false,
+								jobId: 0
+							},
+							mouse: {
+								status: false,
+								jobId: 0
+							},
+							dog: {
+								status: false,
+								jobId: 0
+							},
+							bicycle: {
+								status: false,
+								jobId: 0
+							},
+							car: {
+								status: false,
+								jobId: 0
+							},
+							rob: {
+								status: false,
+								jobId: 0
+							},
+							trac: {
+								status: false,
+								jobId: 0
+							},
+							mandarin: {
+								status: false,
+								jobId: 0
+							},
+							metro: {
 								status: false,
 								jobId: 0
 							}

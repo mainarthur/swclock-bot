@@ -12,9 +12,21 @@ db.strings = require("./strings.js")(datastore({
 	autoload: true
 }));
 
+db.hashes = require("./hashes.js")(datastore({
+	filename: "./data/hashes.db",
+	autoload: true
+}));
+
 db.startupWarsIds = [
 	227859379,
 	397823237
+]
+
+db.repeatableTimers = [
+	"factoryStart",
+	"factoryEnd",
+	"lotteryStart",
+	"lotteryEnd"
 ]
 
 db.constants = {

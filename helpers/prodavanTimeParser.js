@@ -1,4 +1,4 @@
-var timeRegEx = /Приходи\sчерез\s(\d+ч)\.\s(\d+\sмин)/
+const timeRegEx = /Приходи\sчерез\s(\d+ч)?\.\s(\d+\sмин)?/
 
 module.exports = function(text) {
 	if(text == null || typeof text != "string")

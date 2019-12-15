@@ -1,4 +1,4 @@
-var user_reg = /(🤖|🎩|⚡️|📯|☂️)(.*)\s\((\d+)\)\n🔨(\d+)\s🎓(\d+)\s🐿(\d+)\s🐢(\d+)/;
+var userReg = /(🤖|🎩|⚡️|📯|☂️)(.*)\s\((\d+)\)\n🔨(\d+)\s🎓(\d+)\s🐿(\d+)\s🐢(\d+)/;
 
 var prodavanReward = {
 	'experience': /💡Опыт:\s\+(\d+)/,
@@ -28,7 +28,7 @@ module.exports = function(text) {
 		return null;
 		
 	if(text.indexOf("⚔Битва с продаваном") == 0) {
-		var res = {
+		let res = {
 			hero: {
 				power: {}
 			},
@@ -38,11 +38,13 @@ module.exports = function(text) {
 				details: {}
 			}
 		}
-		text = text.replaceAll("\xa0", " ");
-		let m = text.match(user_reg);
+		
+		let m = text.match(userReg);
+		
 		if(m == null) {
 			return;
 		}
+		
 		res.hero.corp = m[1];
 		res.hero.nickname = m[2];
 		res.hero.level = parseInt(m[3]);
