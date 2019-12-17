@@ -121,6 +121,23 @@ async function answerCommand(msg, udata, match) {
 		await bot.sendMessage(uid, answer);
 	}
 	
+	if(command == "my_timers") {
+		let timersKeys = Object.keys(udata.timers);
+		
+		timersKeys = timersKeys.filter(e => udata.timers[e].status);
+		
+		if(timersKeys.length == 0) {
+			await bot.sendMessage(uid, await db.strings.get("you_dont_have_any"));
+		} else {
+			let answer = await db.strings.get("my_timers_label") + "\n";
+			
+			for(let i = 0; i < timersKeys.length; i++) {
+				answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
+			}
+			await bot.sendMessage(uid, answer);
+		}
+	}
+	
 	if(uid != db.constants.adminId)
 		return;
 		
@@ -139,6 +156,16 @@ async function answerCommand(msg, udata, match) {
 	if(command == "getstr") {
 		let str = await db.strings.get(args);
 		await bot.sendMessage(uid,"/sestr " + args + " " + str);
+	}
+	
+	if(command == "u") {
+		let u = await db.users.get(parseInt(args));
+		log(u);
+	}
+	
+	if(command == "job_debug") {
+		let j = await mainQueue.getJob(args);
+		log(j);
 	}
 	
 } 
@@ -179,7 +206,7 @@ async function checkMessage(msg, udata) {
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
 			
 			if(!udata.timers.prodavan.status) {
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
 				
 				let job = await mainQueue.add({
 					type: "prodavan",
@@ -193,10 +220,10 @@ async function checkMessage(msg, udata) {
 			
 			}
 			
-			if(match.statistics.boxes.standart != 0 || match.statistics.boxes.lamp != 0) {
+			if(match.statistics.boxes.standart == 1 || match.statistics.boxes.lamp == 1) {
 				let boxTimeToWait = 24*60*60*1000;
 				if(!udata.timers.box.status && (msg.forward_date + boxTimeToWait) > Date.now()) {
-					let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait;
+					let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 60000;
 			
 					let boxJob = await mainQueue.add({
 						type: "box",
@@ -236,7 +263,7 @@ async function checkMessage(msg, udata) {
 		msg.forward_date *= 1000;
 		let timeToWait = 15*60*60*1000;
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
-			let timeToDelay = msg.forward_date - Date.now() + timeToWait;
+			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
 			
 			if(!udata.timers.metro.status) {
 				let job = await mainQueue.add({
@@ -278,7 +305,7 @@ async function checkMessage(msg, udata) {
 					return;
 				}
 				log("#New_dog_from #id" + uid);
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
 				
 				let job = await mainQueue.add({
 					type: "dog",
@@ -318,7 +345,7 @@ async function checkMessage(msg, udata) {
 					return;
 				}
 				log("#New_mouse_from #id" + uid);
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
 				
 				let job = await mainQueue.add({
 					type: "mouse",
