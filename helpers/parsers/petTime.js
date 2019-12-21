@@ -6,7 +6,6 @@ function petTimeParser(text) {
 		return null;
 	
 	let match = text.match(timeRegEx);
-	console.log(match)
 	if(match == null)
 		return null;
 

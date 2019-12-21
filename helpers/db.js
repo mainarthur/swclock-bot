@@ -19,7 +19,8 @@ db.hashes = require("./hashes.js")(datastore({
 
 db.startupWarsIds = [
 	227859379,
-	397823237
+	397823237,
+	506821790
 ]
 
 db.repeatableTimers = [
@@ -30,7 +31,8 @@ db.repeatableTimers = [
 ]
 
 db.constants = {
-	adminId: 295162096
+	adminId: 295162096,
+	mandarinBotId: 506821790
 }
 
 

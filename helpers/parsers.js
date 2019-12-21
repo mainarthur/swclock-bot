@@ -18,5 +18,12 @@ module.exports = {
 	isCar: require("./parsers/car.js"),
 	isBicycle: require("./parsers/bicycle.js"),
 	isTrac: require("./parsers/trac.js"),
-	vehicleTime: require("./parsers/vehicleTime.js")
+	vehicleTime: require("./parsers/vehicleTime.js"),
+	
+	// Мандарины
+	
+	isMandarin: require("./parsers/mandarin.js"),
+	mandarinTime: require("./parsers/mandarinTime.js"),
+	
+	
 }

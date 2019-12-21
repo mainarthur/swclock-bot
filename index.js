@@ -215,9 +215,14 @@ async function checkMessage(msg, udata) {
 	if(msg.forward_from == null || msg.forward_date == null)
 		return;
 		
+		
+	// Перевод секунд в милисекунды
+	msg.forward_date *= 1000;
+	
 	if(db.startupWarsIds.indexOf(msg.forward_from.id) == -1)
 		return;
 		
+	
 	let { uid } = udata;
 	let { text } = msg;
 	
@@ -239,7 +244,7 @@ async function checkMessage(msg, udata) {
 		udata.hero = match.hero;
 		objectsSummator(udata.statistics.prodavans, match.statistics);
 		
-		msg.forward_date *= 1000;
+		
 		
 		let timeToWait = parsers.prodavanTime(text);
 		
@@ -300,7 +305,7 @@ async function checkMessage(msg, udata) {
 		log("#New_Metro_from #id" + uid);
 		
 		objectsSummator(udata.statistics.metro, match.statistics);
-		msg.forward_date *= 1000;
+		
 		let timeToWait = 15*60*60*1000;
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
 			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -337,7 +342,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		msg.forward_date *= 1000;
+		
 		let timeToWait = parsers.petTime(text);
 		
 		if(timeToWait != null) {
@@ -379,7 +384,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		msg.forward_date *= 1000;
+		
 		let timeToWait = parsers.petTime(text);
 		
 		if(timeToWait != null) {
@@ -420,7 +425,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		msg.forward_date *= 1000;
+		
 		let timeToWait = parsers.vehicleTime(text);
 		
 		if(timeToWait != null) {
@@ -461,7 +466,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		msg.forward_date *= 1000;
+		
 		let timeToWait = parsers.vehicleTime(text);
 		
 		if(timeToWait != null) {
@@ -502,7 +507,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		msg.forward_date *= 1000;
+		
 		let timeToWait = parsers.vehicleTime(text);
 		
 		if(timeToWait != null) {
@@ -537,7 +542,40 @@ async function checkMessage(msg, udata) {
 	// Мандарины
 	//
 	
-	// скороо
+	if(msg.forward_from.id == db.constants.mandarinBotId || parsers.isMandarin(text)) {
+		let timeToWait;
+		
+		if(msg.forward_from.id == db.constants.mandarinBotId)
+			timeToWait = 20*60*60*1000;
+		else
+			timeToWait = parsers.mandarinTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.mandarin.status) {
+					let oldJob = await mainQueue.getJob(udata.timers.mandarin.jobId);
+					await oldJob.remove();
+				}
+				log("#New_mandarin_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "mandarin",
+					uid: uid
+				}, {
+					delay: timeToDelay
+				});
+		
+				udata.timers.mandarin.status = true;
+				udata.timers.mandarin.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("mandarin_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_mandarin_message"));
+			}
+		}
+	}
 	
 	/****************************/
 }
