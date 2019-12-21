@@ -8,12 +8,15 @@ const mainQueue = new Bull("swclock");
 const bot = require("./helpers/bot.js");
 const log = require("./helpers/log.js");
 
-log("Bot started at " + new Date().toString());
-
+(async function() {
+	await bot.startPolling();
+	log("Bot started at " + new Date().toString());
+})();
 
 const parsers = require("./helpers/parsers.js");
 const objectsSummator = require("./helpers/objectsSummator.js");
 const messageHash = require("./helpers/messageHash.js");
+const timePrinter = require("./helpers/timePrinter.js");
 
 bot.on('message', async (msg) => {
 	let { from: user, chat, text } = msg;
@@ -54,8 +57,6 @@ async function answerCommand(msg, udata, match) {
 		
 		await bot.sendMessage(uid, await db.strings.get("start_text"));
 	}
-	
-	
 	
 	if(command == "me") {
 		let answer = await db.strings.get("me_label") + "\n\n";
@@ -132,9 +133,48 @@ async function answerCommand(msg, udata, match) {
 			let answer = await db.strings.get("my_timers_label") + "\n";
 			
 			for(let i = 0; i < timersKeys.length; i++) {
+				let t = udata.timers[timersKeys[i]];
+				
 				answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
+				if(db.repeatableTimers.indexOf(timersKeys[i]) == -1) {
+					// => Не повторяющийся таймер
+					let j = await mainQueue.getJob(t.jobId);
+					
+					let timeToAlert = j.timestamp + j.delay - Date.now();
+					
+					answer += "├ через: " + timePrinter.print(timeToAlert) + "\n";
+					answer += "└ /stop_" + timersKeys[i] + "\n\n";
+					
+				} else {
+					// => Регулярнвй таймер
+					
+					
+				}
 			}
 			await bot.sendMessage(uid, answer);
+		}
+	}
+	
+	if(command.indexOf("stop_") == 0 & command != "stop_") {
+		let timerName = command.substr(5);
+		
+		if(udata.timers[timerName] != null) {
+			let t = udata.timers[timerName];
+			
+			if(!t.status) {
+				await bot.sendMessage(uid, await db.strings.get("timer_isnt_on"));
+			} else {
+				
+				let job = await mainQueue.getJob(udata.timers[timerName].jobId);
+				
+				await job.remove();
+				
+				udata.timers[timerName].status = false;
+				udata.timers[timerName].jobId = 0;
+				
+				await bot.sendMessage(uid, await db.strings.get("timer_stopped"));
+				await db.users.set(udata);
+			}
 		}
 	}
 	
@@ -206,7 +246,7 @@ async function checkMessage(msg, udata) {
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
 			
 			if(!udata.timers.prodavan.status) {
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
 				
 				let job = await mainQueue.add({
 					type: "prodavan",
@@ -223,7 +263,7 @@ async function checkMessage(msg, udata) {
 			if(match.statistics.boxes.standart == 1 || match.statistics.boxes.lamp == 1) {
 				let boxTimeToWait = 24*60*60*1000;
 				if(!udata.timers.box.status && (msg.forward_date + boxTimeToWait) > Date.now()) {
-					let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 60000;
+					let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 20000;
 			
 					let boxJob = await mainQueue.add({
 						type: "box",
@@ -263,7 +303,7 @@ async function checkMessage(msg, udata) {
 		msg.forward_date *= 1000;
 		let timeToWait = 15*60*60*1000;
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
-			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
+			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
 			
 			if(!udata.timers.metro.status) {
 				let job = await mainQueue.add({
@@ -296,8 +336,10 @@ async function checkMessage(msg, udata) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
+		
 		msg.forward_date *= 1000;
 		let timeToWait = parsers.petTime(text);
+		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.dog.status) {
@@ -305,7 +347,7 @@ async function checkMessage(msg, udata) {
 					return;
 				}
 				log("#New_dog_from #id" + uid);
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
 				
 				let job = await mainQueue.add({
 					type: "dog",
@@ -318,6 +360,7 @@ async function checkMessage(msg, udata) {
 				udata.timers.dog.jobId = job.id;
 				
 				await bot.sendMessage(uid, await db.strings.get("dog_report_accepted"));
+				await db.users.set(udata);
 			} else {
 				await bot.sendMessage(uid, await db.strings.get("old_dog_message"));
 			}
@@ -335,9 +378,10 @@ async function checkMessage(msg, udata) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
+		
 		msg.forward_date *= 1000;
 		let timeToWait = parsers.petTime(text);
-		console.log(timeToWait);
+		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.mouse.status) {
@@ -345,7 +389,7 @@ async function checkMessage(msg, udata) {
 					return;
 				}
 				log("#New_mouse_from #id" + uid);
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 60000;
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
 				
 				let job = await mainQueue.add({
 					type: "mouse",
@@ -358,11 +402,143 @@ async function checkMessage(msg, udata) {
 				udata.timers.mouse.jobId = job.id;
 				
 				await bot.sendMessage(uid, await db.strings.get("mouse_report_accepted"));
+				await db.users.set(udata);
 			} else {
 				await bot.sendMessage(uid, await db.strings.get("old_mouse_message"));
 			}
 		}
 	}
+	/****************************/
+	
+	//
+	// Проверка на говномобиль
+	//
+	if(parsers.isCar(text)) {
+		let hash = messageHash(msg);
+		if(await db.hashes.check("car", hash)) {
+			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
+			return;
+		}
+		
+		msg.forward_date *= 1000;
+		let timeToWait = parsers.vehicleTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.car.status) {
+					await bot.sendMessage(uid, await db.strings.get("car_timer_already_in"));
+					return;
+				}
+				log("#New_car_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "car",
+					uid: uid
+				}, {
+					delay: timeToDelay
+				});
+		
+				udata.timers.car.status = true;
+				udata.timers.car.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("car_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_car_message"));
+			}
+		}
+	}
+	/****************************/
+	
+	//
+	// Проверка на велик
+	//
+	if(parsers.isBicycle(text)) {
+		let hash = messageHash(msg);
+		if(await db.hashes.check("bicycle", hash)) {
+			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
+			return;
+		}
+		
+		msg.forward_date *= 1000;
+		let timeToWait = parsers.vehicleTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.bicycle.status) {
+					await bot.sendMessage(uid, await db.strings.get("bicycle_timer_already_in"));
+					return;
+				}
+				log("#New_bicycle_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "bicycle",
+					uid: uid
+				}, {
+					delay: timeToDelay
+				});
+		
+				udata.timers.bicycle.status = true;
+				udata.timers.bicycle.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("bicycle_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_bicycle_message"));
+			}
+		}
+	}
+	/****************************/
+	
+	//
+	// Проверка на трактор
+	//
+	if(parsers.isTrac(text)) {
+		let hash = messageHash(msg);
+		if(await db.hashes.check("trac", hash)) {
+			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
+			return;
+		}
+		
+		msg.forward_date *= 1000;
+		let timeToWait = parsers.vehicleTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.trac.status) {
+					await bot.sendMessage(uid, await db.strings.get("trac_timer_already_in"));
+					return;
+				}
+				log("#New_trac_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "trac",
+					uid: uid
+				}, {
+					delay: timeToDelay
+				});
+		
+				udata.timers.trac.status = true;
+				udata.timers.trac.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("trac_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_trac_message"));
+			}
+		}
+	}
+	/****************************/
+	
+	//
+	// Мандарины
+	//
+	
+	// скороо
+	
 	/****************************/
 }
 
