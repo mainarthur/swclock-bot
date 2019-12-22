@@ -55,7 +55,10 @@ async function answerCommand(msg, udata, match) {
 			await db.users.set(udata);
 		}
 		
-		await bot.sendMessage(uid, await db.strings.get("start_text"));
+		await bot.sendMessage(uid, await db.strings.get("start_text"), {
+			parse_mode: "HTML",
+			disable_web_page_preview: true
+		});
 	}
 	
 	if(command == "me") {
@@ -239,7 +242,7 @@ async function checkMessage(msg, udata) {
 			return;
 		}
 		
-		log("#New_Prodavan_from #id" + uid);
+		log("#New_prodavan_from #id" + uid);
 		
 		udata.hero = match.hero;
 		objectsSummator(udata.statistics.prodavans, match.statistics);

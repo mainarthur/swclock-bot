@@ -1,5 +1,5 @@
 const log_bot = require('./logbot.js');
-const log_cid = -1001481847853;
+const log_cid = process.env.LOG_CHAT_ID;
 
 
 function log(data) {

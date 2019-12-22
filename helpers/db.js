@@ -31,7 +31,7 @@ db.repeatableTimers = [
 ]
 
 db.constants = {
-	adminId: 295162096,
+	adminId: parseInt(process.env.ADMIN_ID),
 	mandarinBotId: 506821790
 }
 
