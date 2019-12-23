@@ -1,6 +1,5 @@
 echo "Установка зависимостей..."
 npm i
-mkdir "data"
 touch ".env"
 echo "Введите токен бота:"
 read BOT_TOKEN
