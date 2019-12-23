@@ -25,5 +25,7 @@ module.exports = {
 	isMandarin: require("./parsers/mandarin.js"),
 	mandarinTime: require("./parsers/mandarinTime.js"),
 	
-	
+	// Коробочка
+	isBox: require("./parsers/box.js"),
+	boxTime: require("./parsers/boxTime.js")
 }

@@ -9,8 +9,18 @@ const bot = require("./helpers/bot.js");
 const log = require("./helpers/log.js");
 
 (async function() {
+	await db.users.forEach(async (udata) => {
+		if(udata.timers.battle == null) {
+			udata.timers.battle = {
+				status: false,
+				jobsId: []
+			}
+			await db.users.set(udata);
+		}
+	});
 	await bot.startPolling();
 	log("Bot started at " + new Date().toString());
+	
 })();
 
 const parsers = require("./helpers/parsers.js");
@@ -125,6 +135,87 @@ async function answerCommand(msg, udata, match) {
 		await bot.sendMessage(uid, answer);
 	}
 	
+	
+	
+	if(command == "factory") {
+		let answer = await db.strings.get("factory_text");
+		
+		let statusEmoji = "⛔";
+		if(udata.timers.factoryStart.status) {
+			statusEmoji = "✅";
+		} 
+		
+		answer = answer.replace("{0}", statusEmoji);
+		
+		await bot.sendMessage(uid, answer);
+	}
+	
+	if(command == "factory_on") {
+		if(!udata.timers.factoryStart.status) {
+			// Запустить таймер
+			let startJob = await mainQueue.add({
+				uid: uid,
+				type: "factoryStart"
+			}, {
+				repeat: {
+					cron: "00 18 * * *"
+				},
+				jobId: 'factoryStart' + uid
+			});
+			
+			let endJob = await mainQueue.add({
+				uid: uid,
+				type: "factoryEnd"
+			}, {
+				repeat: {
+					cron: "30 18 * * *"
+				},
+				jobId: 'factoryEnd' + uid
+			});
+			
+			log("#factory_on #id" + uid);
+			
+			udata.timers.factoryStart.status = true;
+			udata.timers.factoryStart.jobId = startJob.id;
+			
+			udata.timers.factoryEnd.status = true;
+			udata.timers.factoryEnd.jobId = endJob.id;
+			
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("factory_enabled"));
+		} else {
+			// Таймер уже запущен
+			await bot.sendMessage(uid, await db.strings.get("factory_timer_already_in"));
+		}
+	}
+	
+	if(command == "factory_off") {
+		if(udata.timers.factoryStart.status) {
+			// Выключить таймер
+			let startJob = await mainQueue.getJob(udata.timers.factoryStart.jobId);
+			if(startJob != null)
+				await startJob.remove();
+			
+			let endJob = await mainQueue.getJob(udata.timers.factoryEnd.jobId);
+			if(endJob != null)
+				await endJob.remove();
+			
+			udata.timers.factoryStart.status = false;
+			udata.timers.factoryStart.jobId = 0;
+			
+			udata.timers.factoryEnd.status = false;
+			udata.timers.factoryEnd.jobId = 0;
+			
+			log("#factory_off #id" + uid);
+			
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("factory_disabled"));
+		} else {
+			// Таймер уже выключен
+			await bot.sendMessage(uid, await db.strings.get("factory_timer_already_stopped"));
+		}
+	}
+	
 	if(command == "my_timers") {
 		let timersKeys = Object.keys(udata.timers);
 		
@@ -136,11 +227,11 @@ async function answerCommand(msg, udata, match) {
 			let answer = await db.strings.get("my_timers_label") + "\n";
 			
 			for(let i = 0; i < timersKeys.length; i++) {
-				let t = udata.timers[timersKeys[i]];
-				
-				answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
 				if(db.repeatableTimers.indexOf(timersKeys[i]) == -1) {
-					// => Не повторяющийся таймер
+					let t = udata.timers[timersKeys[i]];
+			
+					answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
+					
 					let j = await mainQueue.getJob(t.jobId);
 					
 					let timeToAlert = j.timestamp + j.delay - Date.now();
@@ -148,11 +239,7 @@ async function answerCommand(msg, udata, match) {
 					answer += "├ через: " + timePrinter.print(timeToAlert) + "\n";
 					answer += "└ /stop_" + timersKeys[i] + "\n\n";
 					
-				} else {
-					// => Регулярнвй таймер
-					
-					
-				}
+				} 
 			}
 			await bot.sendMessage(uid, answer);
 		}
@@ -161,7 +248,7 @@ async function answerCommand(msg, udata, match) {
 	if(command.indexOf("stop_") == 0 & command != "stop_") {
 		let timerName = command.substr(5);
 		
-		if(udata.timers[timerName] != null) {
+		if(udata.timers[timerName] != null && db.repeatableTimers.indexOf(timerName) == -1) {
 			let t = udata.timers[timerName];
 			
 			if(!t.status) {
@@ -581,6 +668,36 @@ async function checkMessage(msg, udata) {
 	}
 	
 	/****************************/
+	
+	
+	// 
+	// Проверка на коробочку
+	// 
+	if(parsers.isBox(text)) {
+		let boxTimeToWait = parsers.boxTime(text);
+		if(udata.timers.box.status) {
+			await bot.sendMessage(uid, await db.strings.get("box_timer_already_in"))
+			return;
+		}
+		if(boxTimeToWait != null && (msg.forward_date + boxTimeToWait) > Date.now()) {
+			let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 20000;
+			
+			log("#new_box_from #id" + uid);
+			let boxJob = await mainQueue.add({
+				type: "box",
+				uid: uid
+			}, {
+				delay: boxTimeToDelay
+			});
+					
+			udata.timers.box.status = true;
+			udata.timers.box.jobId = boxJob.id;
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("box_report_accepted"));
+		} else {
+			await bot.sendMessage(uid, await db.strings.get("old_box_message"));
+		}
+	}
 }
 
 

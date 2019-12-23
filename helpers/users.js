@@ -135,6 +135,10 @@ module.exports = function(db) {
 							metro: {
 								status: false,
 								jobId: 0
+							},
+							battle: {
+								status: false,
+								jobsId: 0
 							}
 						}
 					};

@@ -27,7 +27,8 @@ db.repeatableTimers = [
 	"factoryStart",
 	"factoryEnd",
 	"lotteryStart",
-	"lotteryEnd"
+	"lotteryEnd",
+	"battle"
 ]
 
 db.constants = {
