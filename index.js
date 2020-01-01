@@ -194,11 +194,11 @@ async function answerCommand(msg, udata, match) {
 			// Выключить таймер
 			let startJob = await mainQueue.getJob(udata.timers.factoryStart.jobId);
 			if(startJob != null)
-				await startJob.remove();
+				await mainQueue.removeRepeatable(startJob.opts.repeat)
 			
 			let endJob = await mainQueue.getJob(udata.timers.factoryEnd.jobId);
 			if(endJob != null)
-				await endJob.remove();
+				await mainQueue.removeRepeatable(endJob.opts.repeat)
 			
 			udata.timers.factoryStart.status = false;
 			udata.timers.factoryStart.jobId = 0;
@@ -282,10 +282,11 @@ async function answerCommand(msg, udata, match) {
 			await bot.sendMessage(uid, "Invalid syntax");
 		}
 	}
+	
 
 	if(command == "getstr") {
 		let str = await db.strings.get(args);
-		await bot.sendMessage(uid,"/sestr " + args + " " + str);
+		await bot.sendMessage(uid,"/setstr " + args + " " + str);
 	}
 	
 	if(command == "u") {
