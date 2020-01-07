@@ -136,9 +136,13 @@ module.exports = function(db) {
 								status: false,
 								jobId: 0
 							},
+							book: {
+								status: false,
+								jobId: 0
+							},
 							battle: {
 								status: false,
-								jobsId: 0
+								jobsId: []
 							}
 						}
 					};

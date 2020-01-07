@@ -27,5 +27,9 @@ module.exports = {
 	
 	// Коробочка
 	isBox: require("./parsers/box.js"),
-	boxTime: require("./parsers/boxTime.js")
+	boxTime: require("./parsers/boxTime.js"),
+	
+	// Книжки
+	
+	isBook: require("./parsers/book.js")
 }

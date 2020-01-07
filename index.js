@@ -10,7 +10,12 @@ const log = require("./helpers/log.js");
 
 (async function() {
 	await db.users.forEach(async (udata) => {
-		if(udata.timers.battle == null) {
+		if(udata.timers.book == null) {
+			udata.timers.book = {
+				status: false,
+				jobId: 0
+			}
+			delete udata.timers.battle;
 			udata.timers.battle = {
 				status: false,
 				jobsId: []
@@ -699,6 +704,49 @@ async function checkMessage(msg, udata) {
 			await bot.sendMessage(uid, await db.strings.get("old_box_message"));
 		}
 	}
+	/****************************/
+	
+	//
+	// Проверка на книжку с опытом
+	//
+	if(parsers.isBook(text)) {
+		
+		let hash = messageHash(msg);
+		if(await db.hashes.check("book", hash)) {
+			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
+			return;
+		}
+		
+		
+		if(udata.timers.book.status) {
+			await bot.sendMessage(uid, await db.strings.get("book_timer_already_in"))
+			return;
+		}
+		
+		
+		let bookTimeToWait = 50*60*1000;
+		
+		if((msg.forward_date + bookTimeToWait) > Date.now()) {
+			let timeToDelay = msg.forward_date - Date.now() + bookTimeToWait + 20000;
+			
+			log("#New_book_from #id" + uid);
+			let job = await mainQueue.add({
+				type: "book",
+				uid: uid
+			}, {
+				delay: timeToDelay
+			});
+					
+			udata.timers.book.status = true;
+			udata.timers.book.jobId = job.id;
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("book_report_accepted"));
+		} else {
+			await bot.sendMessage(uid, await db.strings.get("old_book_message"));
+		}
+	}
+	/****************************/
+	
 }
 
 

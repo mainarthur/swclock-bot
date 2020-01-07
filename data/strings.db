@@ -3,7 +3,9 @@
 {"id":"mandarin_timer_label","value":"🍊Мандарины","_id":"23mXWO9OgNWqDVA5"}
 {"id":"mouse_is_ready","value":"🐀Мышка готова к апдейтам!","_id":"2YLhkJSizVGTy8Ds"}
 {"id":"factoryStart_is_ready","value":"Фабрика началась!","_id":"4bphWyoWgqpKvKd6"}
+{"id":"book_report_accepted","value":"📒Книжка принята","_id":"5K5EocBbMphDQnYS"}
 {"id":"old_mandarin_message","value":"Вы уже можете подарить 🍊Мандаринки","_id":"8ACwpCefpskJtlNP"}
+{"id":"book_timer_already_in","value":"Таймер с 📒Книжкой уже запущен","_id":"8gCWLIgqQ1anf18i"}
 {"id":"box_timer_already_in","value":"Таймер с 🎁Коробочкой уже запущен","_id":"8zcQBUPJFrJ6LGzb"}
 {"id":"prodavan_was_added_to_db","value":"Отчет о битве с 👨Продаваном добавлен в статистику","_id":"A7NM0yfvjlMZgeJB"}
 {"id":"box_timer_label","value":"🎁Коробочка","_id":"ALxJyx7jMq5G5grj"}
@@ -36,12 +38,14 @@
 {"id":"old_box_message","value":"Старое сообщение с 🎁Коробочкой","_id":"eNhKC7ryxl4IVUez"}
 {"id":"old_mouse_message","value":"Ваша 🐀Мышь уже отдохнула после апа","_id":"fWq5M4wVYEFrgBGg"}
 {"id":"dog_is_ready","value":"🐕Собачка готова к апдейтам!","_id":"gXFyhtRYMj4KlYAW"}
+{"id":"book_is_ready","value":"Вы можете прочитать еще одну 📒Книжку с опытом","_id":"i9iJFU3BgbV8qRJW"}
 {"id":"bicycle_timer_already_in","value":"Таймер 🚲Велосипеда уже запущен","_id":"iQUSrAVJxkq9fQ2U"}
 {"id":"bicycle_report_accepted","value":"Таймер для 🚲Велосипедa запущен","_id":"iUKKJoH5sExYCF2W"}
 {"id":"trac_is_ready","value":"Вы можете прокатиться на 🚜Тракторе","_id":"k4WXs8FYgTCH2dnr"}
 {"id":"mandarin_report_accepted","value":"Таймер про 🍊Мандарины запущен","_id":"k7TnT8m36DJgYfJ3"}
 {"id":"car_report_accepted","value":"Таймер для 🚕Ааавтомобиля запущен","_id":"mKLWXcUSpUNKGzqz"}
 {"id":"old_bicycle_message","value":"Вы уже готовы к поездке на 🚲Велосипеде","_id":"makHvjWwIJf25ktU"}
+{"id":"old_book_message","value":"Старое сообщение с 📒Книжкой","_id":"mlECScLogZSfXdMS"}
 {"id":"metro_timer_label","value":"🚇Метро","_id":"pZJpId9zOP2gzRMi"}
 {"id":"your_hero_label","value":"Игрок:","_id":"qTP6vkVCH4TmRhy5"}
 {"id":"car_timer_already_in","value":"Таймер 🚕Ааавтомобиля уже запущен","_id":"skQYMnHVuA21jGrX"}
@@ -58,3 +62,4 @@
 {"id":"factory_timer_already_in","value":"Вы уже подписаны на уведомления начала и окончания битвы за фабрику","_id":"zJbrf4t5uAp7rDwF"}
 {"id":"already_parsed","value":"Я уже получал этот отчет!","_id":"zayg361mXKVwQSJL"}
 {"id":"metro_label","value":"Метро:","_id":"zbI9cOoAEUwm5sOV"}
+{"id":"book_timer_label","value":"📒Книжка","_id":"pIMz6tMDz7Or8AaF"}
