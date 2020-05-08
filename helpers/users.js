@@ -61,6 +61,7 @@ module.exports = function(db) {
 									whiteLamp: 0
 								}
 							},
+							suicides: 0,
 							metro: { // метро
 								atime: 0, // досрочный выход
 								intime: 0, // обычный выход
@@ -71,6 +72,7 @@ module.exports = function(db) {
 								pizzas: 0, // пиццы
 								hotdogs: 0, // хотдоги
 								tokens: 0, // токены
+								money: 0, // баблишко
 								upgrades: { // заточки
 									white: 0,
 									blue: 0,
@@ -143,6 +145,14 @@ module.exports = function(db) {
 							battle: {
 								status: false,
 								jobsId: []
+							},
+							govnokat: {
+								status: false,
+								jobId: 0
+							},
+							custom: {
+								status: false,
+								jobId: 0
 							}
 						}
 					};

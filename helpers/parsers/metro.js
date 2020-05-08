@@ -32,7 +32,7 @@ module.exports = function(text) {
 		if(text.indexOf("Ты вышел из метро досрочно.") == 0) {
 			res.statistics.atime = 1;
 		} else {
-			res.statistics.imtime = 1;
+			res.statistics.intime = 1;
 		}
 		
 		let regexes = Object.keys(metroReward);

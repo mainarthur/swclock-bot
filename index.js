@@ -2,24 +2,29 @@ require("dotenv").config();
 
 const db = require("./helpers/db.js");
 const Bull = require("bull");
+const userToString = require("./helpers/userToString.js");
 
 const mainQueue = new Bull("swclock");
+const botQueue = new Bull("swclock-bot-messages", {
+	limiter: {
+		max: 30,
+		duration: 1000
+	}
+});
 
 const bot = require("./helpers/bot.js");
 const log = require("./helpers/log.js");
 
 (async function() {
 	await db.users.forEach(async (udata) => {
-		if(udata.timers.book == null) {
-			udata.timers.book = {
+		if(udata.timers.govnokat == null) {
+			udata.timers.govnokat = {
 				status: false,
 				jobId: 0
 			}
-			delete udata.timers.battle;
-			udata.timers.battle = {
-				status: false,
-				jobsId: []
-			}
+			
+			delete udata.statistics.govnokat
+			
 			await db.users.set(udata);
 		}
 	});
@@ -32,30 +37,25 @@ const parsers = require("./helpers/parsers.js");
 const objectsSummator = require("./helpers/objectsSummator.js");
 const messageHash = require("./helpers/messageHash.js");
 const timePrinter = require("./helpers/timePrinter.js");
-
+var antiflood = {};
 bot.on('message', async (msg) => {
-	let { from: user, chat, text } = msg;
+	let { from: user } = msg;
+	let uid = user.id;
 	
-	text = text.replaceAll("\xa0", " ");
-	msg.text = text;
-	if(chat.type != "private") {
-		await bot.leaveChat(chat.id);
+	if(antiflood[uid] == null) {
+		antiflood[uid] = {};
+	}
+	
+	let now = Math.floor(Date.now()/1000);
+	if(antiflood[uid][now] == null) {
+		antiflood[uid][now] = 1;
+	} else { 
+		antiflood[uid][now]++;
+	}
+	
+	if(antiflood[uid][now] > 3)
 		return;
-	}
-	
-	let udata = await db.users.add(user);
-	if(udata == null) {
-		console.log("udata == null\nUser: " + user);
-		return;
-	}
-	
-	let match = parsers.command(msg);
-	
-	if(match != false) {
-		await answerCommand(msg, udata, match);
-	} else if(text != null) {
-		await checkMessage(msg, udata);
-	}
+	botQueue.add(msg, { removeOnComplete: true, removeOnFail: true });
 	
 });
 
@@ -72,7 +72,14 @@ async function answerCommand(msg, udata, match) {
 		
 		await bot.sendMessage(uid, await db.strings.get("start_text"), {
 			parse_mode: "HTML",
-			disable_web_page_preview: true
+			disable_web_page_preview: true,
+			reply_markup: {
+				resize_keyboard: true,
+				keyboard: [
+					[{text: await db.strings.get("me")},{text: await db.strings.get("prodavans")}],
+					[{text: await db.strings.get("my_timers")},{text: await db.strings.get("factory")}],
+				]
+			}
 		});
 	}
 	
@@ -82,7 +89,10 @@ async function answerCommand(msg, udata, match) {
 		if(udata.hero.level > 0) {
 			answer += await db.strings.get("your_hero_label") + "\n";
 			let { corp, nickname, level, power } = udata.hero;
-			
+			if(uid == 933445616) {
+				nickname = "Умелый QA";
+				corp = "❤";
+			}
 			answer += corp + nickname + " (" + level + ")\n";
 			
 			let { practice, theory, wisdom, cunning } = power;
@@ -90,8 +100,10 @@ async function answerCommand(msg, udata, match) {
 			answer += "🔨" + practice + " 🎓" + theory + " 🐿" + cunning + " 🐢" + wisdom + "\n\n";
 		} 
 		
-		let { prodavans, metro } = udata.statistics;
-		
+		let { prodavans, metro, suicides } = udata.statistics;
+		if(suicides > 0) {
+			answer += "Вы сдохли: " + suicides + "раз\n\n";
+		}	
 		answer += await db.strings.get("prodavans_label") + "\n";
 		
 		with(prodavans) { // 
@@ -107,7 +119,7 @@ async function answerCommand(msg, udata, match) {
 		answer += await db.strings.get("metro_label");
 		
 		with(metro) {
-			answer += "🚇" + (atime + intime) + " (" + intime + "/" + atime + ") 🕳" + tokens + "\n";
+			answer += "🚇" + (atime + intime) + " (" + intime + "/" + atime + ") \n🕳" + tokens + " 💵" + money + "\n";
 			answer += "📚" + knowledge + " ⚙" + details + " 🔩" + bolts + "\n";
 			answer += "🌭" + hotdogs + " 🍕" + pizzas + " 🍔" + burgers + "\n";
 			answer += "⚪" + upgrades.white +  " 🔵" + upgrades.blue + " 🔴" + upgrades.red + "\n";
@@ -221,10 +233,54 @@ async function answerCommand(msg, udata, match) {
 		}
 	}
 	
+	if(command == "suicide") {
+		await bot.sendMessage(uid, await db.strings.get("you_died"));
+		udata.statistics.suicides++;
+		if(udata.statistics.suicides == 1)
+			log("User #id" + uid + " #died");
+		await db.users.set(udata);
+	}
+	
+	if(command == "graveyard") {
+		let all = await db.users.all();
+		all = all.filter(udata => udata.statistics.suicides > 0)
+		all.sort((a,b) => b.statistics.suicides - a.statistics.suicides);
+		
+		let yourPos = all.map(udata => udata.uid).indexOf(uid);
+		all = all.slice(0,15);
+		let answer = await db.strings.get("graveyard_title") + "\n";
+		
+		for(let i = 0; i < all.length; i++) {
+			let u = all[i];
+			let ui = u.userinfo;
+			let s = u.statistics.suicides;
+			if(u.uid == uid) {
+				answer += `#${i+1} <b>${ ui.first_name + (ui.last_name == null ? "" : " " + ui.last_name)}</b>: ${s}\n`
+			} else {
+				answer += `#${i+1} ${userToString(ui)}: ${s}\n`
+			}
+		}
+		if(yourPos == -1) {
+			answer += await db.strings.get("not_dead")
+		} else if(yourPos > all.length) {
+			answer += "...\n";
+			let ui = udata.userinfo;
+			let s = udata.statistics.suicides;
+			answer += `#${yourPos+1} <b>${ ui.first_name + (ui.last_name == null ? "" : " " + ui.last_name)}</b>: ${s}\n`
+		} else if(yourPos == all.length) {
+			let ui = udata.userinfo;
+			let s = udata.statistics.suicides;
+			answer += `#${yourPos+1} <b>${ ui.first_name + (ui.last_name == null ? "" : " " + ui.last_name)}</b>: ${s}\n`
+		}
+		await bot.sendMessage(uid, answer, {parse_mode:"html"});
+	}
+	
 	if(command == "my_timers") {
 		let timersKeys = Object.keys(udata.timers);
 		
 		timersKeys = timersKeys.filter(e => udata.timers[e].status);
+		
+		timersKeys = timersKeys.filter(e => db.repeatableTimers.indexOf(e) == -1);
 		
 		if(timersKeys.length == 0) {
 			await bot.sendMessage(uid, await db.strings.get("you_dont_have_any"));
@@ -235,10 +291,17 @@ async function answerCommand(msg, udata, match) {
 				if(db.repeatableTimers.indexOf(timersKeys[i]) == -1) {
 					let t = udata.timers[timersKeys[i]];
 			
-					answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
+					
 					
 					let j = await mainQueue.getJob(t.jobId);
-					
+					if(j == null) {
+						udata.timers[timersKeys[i]].status = false;
+						udata.timers[timersKeys[i]].jobId = 0;
+						
+						await db.users.set(udata);
+						continue;
+					}
+					answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
 					let timeToAlert = j.timestamp + j.delay - Date.now();
 					
 					answer += "├ через: " + timePrinter.print(timeToAlert) + "\n";
@@ -273,8 +336,102 @@ async function answerCommand(msg, udata, match) {
 		}
 	}
 	
+	if(command == "custom") {
+		if(args == null || args == "") {
+			await bot.sendMessage(uid, await db.strings.get("custom_help"));
+			return
+		}
+		
+		if(udata.timers.custom.status) {
+			await bot.sendMessage(uid, await db.strings.get("custom_timer_already_started"));
+			return;
+		}
+		
+		
+		let customRegExp = /(\d+ч\s)?(\d+м\s)?.+/i
+		let time = 0;
+		let text = "";
+		let offset = 0;
+		
+		let match = args.match(customRegExp);
+		
+		for(let i = 1; i < match.length; i++) {
+			let m = match[i];
+			if(m != null) {
+				if(m.includes("м")) {
+					time += parseInt(m)*60*1000;
+					offset += m.length;
+				} else {
+					time += parseInt(m)*60*60*1000;
+					offset += m.length;
+				}
+			}
+		}
+		
+		text = args.substr(offset);
+		
+		console.log(`Custom timer args="${args}" match=[${match.join(",")}] time=${time} offset=${offset} text="${text}"`);
+		
+		if(time == 0 || text == "" || time > 24*60*60*1000) {
+			await bot.sendMessage(uid, await db.strings.get("invalid_args"));
+			return;
+		}
+		
+		
+		let job = await mainQueue.add("custom", {
+			uid: uid,
+			text: text
+		}, {
+			delay: time,
+			removeOnComplete: true
+		});
+		
+		udata.timers.custom.status = true;
+		udata.timers.custom.jobId = job.id;
+		
+		await db.users.set(udata);
+		await bot.sendMessage(uid, await db.strings.get("custom_timer_started"));
+		
+	}
+	
 	if(uid != db.constants.adminId)
 		return;
+	
+	if(command == "stop_timers") {
+		let u = await db.users.get(parseInt(args));
+		
+		if(u == null) {
+			await bot.sendMessage(uid, "User not found");
+			return;
+		}
+		let timersKeys = Object.keys(u.timers);
+		
+		timersKeys = timersKeys.filter(e => u.timers[e].status);
+		
+		if(timersKeys.length == 0) {
+			await bot.sendMessage(uid, "no timers");
+		} else {
+			for(let i = 0; i < timersKeys.length; i++) {
+				if(db.repeatableTimers.indexOf(timersKeys[i]) == -1) {
+
+			
+					try {
+						u.timers[timersKeys[i]].status = false;
+						
+						let j = await mainQueue.getJob(u.timers[timersKeys[i]].jobId);
+						u.timers[timersKeys[i]].jobId = 0;
+						
+						await j.remove();
+					} catch(e) {
+						console.log(e);
+					}
+					
+				} 
+			}
+			await db.users.set(u);
+			await bot.sendMessage(uid, "done");
+		}
+	}
 		
 	if(command == "setstr") {
 		let m = args.match(/([a-z_0-9]+)\s.+/i);
@@ -294,6 +451,15 @@ async function answerCommand(msg, udata, match) {
 		await bot.sendMessage(uid,"/setstr " + args + " " + str);
 	}
 	
+	if(command == "magic") {
+		let t = await db.users.get(488681934)
+		
+		console.log(t);
+		t.statistics.suicides = 9999;
+		await db.users.set(t)
+		console.log(t);
+	}
+	
 	if(command == "u") {
 		let u = await db.users.get(parseInt(args));
 		log(u);
@@ -308,6 +474,35 @@ async function answerCommand(msg, udata, match) {
 
 async function checkMessage(msg, udata) {
 	
+	let { text } = msg;
+	
+	switch(text) {
+		case await db.strings.get("me"):
+			await answerCommand(msg, udata, {
+				command: "me",
+				args: ""
+			});
+			return;
+		case await db.strings.get("my_timers"):
+			await answerCommand(msg, udata, {
+				command: "my_timers",
+				args: ""
+			});
+			return;
+		case await db.strings.get("prodavans"):
+			await answerCommand(msg, udata, {
+				command: "prodavans",
+				args: ""
+			});
+			return;
+		case await db.strings.get("factory"):
+			await answerCommand(msg, udata, {
+				command: "factory",
+				args: ""
+			});
+			return;
+	}
+	
 	if(msg.forward_from == null || msg.forward_date == null)
 		return;
 		
@@ -320,7 +515,7 @@ async function checkMessage(msg, udata) {
 		
 	
 	let { uid } = udata;
-	let { text } = msg;
+	
 	
 	
 	//
@@ -330,36 +525,37 @@ async function checkMessage(msg, udata) {
 	if(match != null) {
 		
 		let hash = messageHash(msg);
-		if(await db.hashes.check("prodavan", hash)) {
-			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
-			return;
+		if(!(await db.hashes.check("prodavan", hash))) {
+			log("#New_prodavan_from #id" + uid);
+
+			udata.hero = match.hero;
+			objectsSummator(udata.statistics.prodavans, match.statistics);
 		}
-		
-		log("#New_prodavan_from #id" + uid);
-		
-		udata.hero = match.hero;
-		objectsSummator(udata.statistics.prodavans, match.statistics);
-		
-		
 		
 		let timeToWait = parsers.prodavanTime(text);
 		
+		
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
 			
-			if(!udata.timers.prodavan.status) {
-				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
-				
-				let job = await mainQueue.add({
-					type: "prodavan",
-					uid: uid
-				}, {
-					delay: timeToDelay
-				});
-		
-				udata.timers.prodavan.status = true;
-				udata.timers.prodavan.jobId = job.id;
 			
+			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+			console.log(`[prodavan] timeToWait=${timeToWait} timeToDelay=${timeToDelay}`)
+			if(udata.timers.prodavan.status) {
+				let oldJob = await mainQueue.getJob(udata.timers.prodavan.jobId);
+				await oldJob.remove();
 			}
+				
+			let job = await mainQueue.add({
+				type: "prodavan",
+				uid: uid
+			}, {
+				delay: timeToDelay,
+				removeOnComplete: true
+			});
+		
+			udata.timers.prodavan.status = true;
+			udata.timers.prodavan.jobId = job.id;
+			
 			
 			if(match.statistics.boxes.standart == 1 || match.statistics.boxes.lamp == 1) {
 				let boxTimeToWait = 24*60*60*1000;
@@ -370,7 +566,8 @@ async function checkMessage(msg, udata) {
 						type: "box",
 						uid: uid
 					}, {
-						delay: boxTimeToDelay
+						delay: boxTimeToDelay,
+						removeOnComplete: true
 					});
 					
 					udata.timers.box.status = true;
@@ -394,29 +591,33 @@ async function checkMessage(msg, udata) {
 	match = parsers.metro(text);
 	if(match != null) {
 		let hash = messageHash(msg);
-		if(await db.hashes.check("metro", hash)) {
-			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
-			return;
-		}
-		log("#New_Metro_from #id" + uid);
+		if(!(await db.hashes.check("metro", hash))) {
+			log("#New_Metro_from #id" + uid);
 		
-		objectsSummator(udata.statistics.metro, match.statistics);
+			objectsSummator(udata.statistics.metro, match.statistics);
+		}
+		
 		
 		let timeToWait = 15*60*60*1000;
 		if(timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
-			let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+			let timeToDelay = timeToWait + 20000;
 			
-			if(!udata.timers.metro.status) {
-				let job = await mainQueue.add({
-					type: "metro",
-					uid: uid
-				}, {
-					delay: timeToDelay
-				});
-		
-				udata.timers.metro.status = true;
-				udata.timers.metro.jobId = job.id;
+			if(udata.timers.metro.status) {
+				let oldJob = await mainQueue.getJob(udata.timers.metro.jobId);
+				await oldJob.remove();
 			}
+			
+			let job = await mainQueue.add({
+				type: "metro",
+				uid: uid
+			}, {
+				delay: timeToDelay,
+				removeOnComplete: true
+			});
+		
+			udata.timers.metro.status = true;
+			udata.timers.metro.jobId = job.id;
+			
 			
 			await bot.sendMessage(uid, await db.strings.get("metro_accepted"));
 		} else {
@@ -432,20 +633,22 @@ async function checkMessage(msg, udata) {
 	// Проверка на собаку
 	//
 	if(parsers.isDog(text)) {
+		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("dog", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
-		
+		*/
 		
 		let timeToWait = parsers.petTime(text);
 		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.dog.status) {
-					await bot.sendMessage(uid, await db.strings.get("dog_timer_already_in"));
-					return;
+					let oldJob = await mainQueue.getJob(udata.timers.dog.jobId);
+					await oldJob.remove();
 				}
 				log("#New_dog_from #id" + uid);
 				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -454,7 +657,8 @@ async function checkMessage(msg, udata) {
 					type: "dog",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.dog.status = true;
@@ -474,20 +678,23 @@ async function checkMessage(msg, udata) {
 	// Проверка на мышь
 	//
 	if(parsers.isMouse(text)) {
+		
+		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("mouse", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
-		
+		*/
 		
 		let timeToWait = parsers.petTime(text);
 		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.mouse.status) {
-					await bot.sendMessage(uid, await db.strings.get("mouse_timer_already_in"));
-					return;
+					let oldJob = await mainQueue.getJob(udata.timers.mouse.jobId);
+					await oldJob.remove();
 				}
 				log("#New_mouse_from #id" + uid);
 				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -496,7 +703,8 @@ async function checkMessage(msg, udata) {
 					type: "mouse",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.mouse.status = true;
@@ -515,20 +723,22 @@ async function checkMessage(msg, udata) {
 	// Проверка на говномобиль
 	//
 	if(parsers.isCar(text)) {
+		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("car", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
-		
+		*/
 		
 		let timeToWait = parsers.vehicleTime(text);
 		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.car.status) {
-					await bot.sendMessage(uid, await db.strings.get("car_timer_already_in"));
-					return;
+					let oldJob = await mainQueue.getJob(udata.timers.car.jobId);
+					await oldJob.remove();
 				}
 				log("#New_car_from #id" + uid);
 				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -537,7 +747,8 @@ async function checkMessage(msg, udata) {
 					type: "car",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.car.status = true;
@@ -556,20 +767,22 @@ async function checkMessage(msg, udata) {
 	// Проверка на велик
 	//
 	if(parsers.isBicycle(text)) {
+		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("bicycle", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
-		
+		*/
 		
 		let timeToWait = parsers.vehicleTime(text);
 		
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.bicycle.status) {
-					await bot.sendMessage(uid, await db.strings.get("bicycle_timer_already_in"));
-					return;
+					let oldJob = await mainQueue.getJob(udata.timers.bicycle.jobId);
+					await oldJob.remove();
 				}
 				log("#New_bicycle_from #id" + uid);
 				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -578,7 +791,8 @@ async function checkMessage(msg, udata) {
 					type: "bicycle",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.bicycle.status = true;
@@ -597,11 +811,15 @@ async function checkMessage(msg, udata) {
 	// Проверка на трактор
 	//
 	if(parsers.isTrac(text)) {
+		
+		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("trac", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
+		*/
 		
 		
 		let timeToWait = parsers.vehicleTime(text);
@@ -609,8 +827,8 @@ async function checkMessage(msg, udata) {
 		if(timeToWait != null) {
 			if((msg.forward_date + timeToWait) > Date.now()) {
 				if(udata.timers.trac.status) {
-					await bot.sendMessage(uid, await db.strings.get("trac_timer_already_in"));
-					return;
+					let oldJob = await mainQueue.getJob(udata.timers.trac.jobId);
+					await oldJob.remove();
 				}
 				log("#New_trac_from #id" + uid);
 				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
@@ -619,7 +837,8 @@ async function checkMessage(msg, udata) {
 					type: "trac",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.trac.status = true;
@@ -659,7 +878,8 @@ async function checkMessage(msg, udata) {
 					type: "mandarin",
 					uid: uid
 				}, {
-					delay: timeToDelay
+					delay: timeToDelay,
+					removeOnComplete: true
 				});
 		
 				udata.timers.mandarin.status = true;
@@ -682,8 +902,8 @@ async function checkMessage(msg, udata) {
 	if(parsers.isBox(text)) {
 		let boxTimeToWait = parsers.boxTime(text);
 		if(udata.timers.box.status) {
-			await bot.sendMessage(uid, await db.strings.get("box_timer_already_in"))
-			return;
+			let oldJob = await mainQueue.getJob(udata.timers.box.jobId);
+			await oldJob.remove();
 		}
 		if(boxTimeToWait != null && (msg.forward_date + boxTimeToWait) > Date.now()) {
 			let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 20000;
@@ -693,7 +913,8 @@ async function checkMessage(msg, udata) {
 				type: "box",
 				uid: uid
 			}, {
-				delay: boxTimeToDelay
+				delay: boxTimeToDelay,
+				removeOnComplete: true
 			});
 					
 			udata.timers.box.status = true;
@@ -711,16 +932,17 @@ async function checkMessage(msg, udata) {
 	//
 	if(parsers.isBook(text)) {
 		
+		/*
 		let hash = messageHash(msg);
 		if(await db.hashes.check("book", hash)) {
 			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
 			return;
 		}
-		
+		*/
 		
 		if(udata.timers.book.status) {
-			await bot.sendMessage(uid, await db.strings.get("book_timer_already_in"))
-			return;
+			let oldJob = await mainQueue.getJob(udata.timers.book.jobId);
+			await oldJob.remove();
 		}
 		
 		
@@ -734,7 +956,8 @@ async function checkMessage(msg, udata) {
 				type: "book",
 				uid: uid
 			}, {
-				delay: timeToDelay
+				delay: timeToDelay,
+				removeOnComplete: true
 			});
 					
 			udata.timers.book.status = true;
@@ -746,6 +969,42 @@ async function checkMessage(msg, udata) {
 		}
 	}
 	/****************************/
+	
+	//
+	// ебаный говнокат
+	// 
+	if(parsers.isGovnokat(text)) {
+		let timeToWait = parsers.vehicleTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.govnokat.status) {
+					let oldJob = await mainQueue.getJob(udata.timers.govnokat.jobId);
+					await oldJob.remove();
+				}
+				log("#New_govnokat_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "govnokat",
+					uid: uid
+				}, {
+					delay: timeToDelay,
+					removeOnComplete: true
+				});
+		
+				udata.timers.govnokat.status = true;
+				udata.timers.govnokat.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("govnokat_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_trac_message"));
+			}
+		}
+	}
+	/****************************/
+	
 	
 }
 
@@ -765,8 +1024,61 @@ mainQueue.process( async (job) => {
 		
 		udata.timers[type].status = false;
 		udata.timers[type].jobId = 0;
+		await db.users.set(udata);
+	}
+	await bot.sendMessage(uid, await db.strings.get(type + "_is_ready"));
+});
+
+mainQueue.process("custom", async (job) => {
+	let { data } = job;
+	let { uid, text } = data;
+	let type = "custom";
+	let udata = await db.users.get(uid);
+	
+	if(udata == null)
+		return;
+	if(udata.timers[type] == null)
+		return;
+		
+	log("#New_" + type + "_for #id" + uid);
+		
+	udata.timers[type].status = false;
+	udata.timers[type].jobId = 0;
+	
+	await bot.sendMessage(uid, text);
+	await db.users.set(udata);
+});
+
+botQueue.process(async (job) => {
+	let msg = job.data;
+	
+	let { from: user, chat, text } = msg;
+	
+	text = text.replaceAll("\xa0", " ");
+	msg.text = text;
+	if(chat.type != "private") {
+		await bot.leaveChat(chat.id);
+		return;
 	}
 	
-	await bot.sendMessage(uid, await db.strings.get(type + "_is_ready"));
-	await db.users.set(udata);
+	let udata = await db.users.add(user);
+	if(udata == null) {
+		console.log("udata == null\nUser: " + user);
+		return;
+	}
+	
+	let match = parsers.command(msg);
+	
+	try {
+	
+	if(match != false) {
+		await answerCommand(msg, udata, match);
+	} else if(text != null) {
+		await checkMessage(msg, udata);
+	}
+	
+	} catch(e) {
+		console.log(e)
+	}
+	
 });
