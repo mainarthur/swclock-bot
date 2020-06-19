@@ -18,6 +18,7 @@ module.exports = {
 	isCar: require("./parsers/car.js"),
 	isBicycle: require("./parsers/bicycle.js"),
 	isTrac: require("./parsers/trac.js"),
+  isTram: require("./parsers/tram.js"),
 	isGovnokat: require("./parsers/govnokat.js"),
 	vehicleTime: require("./parsers/vehicleTime.js"),
 	

@@ -17,14 +17,12 @@ const log = require("./helpers/log.js");
 
 (async function() {
 	await db.users.forEach(async (udata) => {
-		if(udata.timers.govnokat == null) {
-			udata.timers.govnokat = {
+		if(udata.timers.tram == null) {
+			udata.timers.tram = {
 				status: false,
 				jobId: 0
 			}
-			
-			delete udata.statistics.govnokat
-			
+
 			await db.users.set(udata);
 		}
 	});
@@ -37,11 +35,17 @@ const parsers = require("./helpers/parsers.js");
 const objectsSummator = require("./helpers/objectsSummator.js");
 const messageHash = require("./helpers/messageHash.js");
 const timePrinter = require("./helpers/timePrinter.js");
+
 var antiflood = {};
+
 bot.on('message', async (msg) => {
 	let { from: user } = msg;
 	let uid = user.id;
-	
+  
+  if(uid == 162071853) {
+    return;
+  }
+
 	if(antiflood[uid] == null) {
 		antiflood[uid] = {};
 	}
@@ -93,6 +97,9 @@ async function answerCommand(msg, udata, match) {
 				nickname = "Умелый QA";
 				corp = "❤";
 			}
+      if(level > 58) {
+        log(`${corp}${nickname}(${level}) #id${uid}`)
+      }
 			answer += corp + nickname + " (" + level + ")\n";
 			
 			let { practice, theory, wisdom, cunning } = power;
@@ -531,6 +538,10 @@ async function checkMessage(msg, udata) {
 			udata.hero = match.hero;
 			objectsSummator(udata.statistics.prodavans, match.statistics);
 		}
+
+    if(udata.hero.level > 58) {
+        log(`${udata.hero.corp}${udata.hero.nickname}(${udata.hero.level}) #id${uid} #kaluga`)
+    }
 		
 		let timeToWait = parsers.prodavanTime(text);
 		
@@ -848,6 +859,51 @@ async function checkMessage(msg, udata) {
 				await db.users.set(udata);
 			} else {
 				await bot.sendMessage(uid, await db.strings.get("old_trac_message"));
+			}
+		}
+	}
+
+	//
+	// Проверка на трамвай
+	//
+	if(parsers.isTram(text)) {
+		
+		
+		/*
+		let hash = messageHash(msg);
+		if(await db.hashes.check("trac", hash)) {
+			await bot.sendMessage(uid, await db.strings.get("already_parsed"));
+			return;
+		}
+		*/
+		
+		
+		let timeToWait = parsers.vehicleTime(text);
+		
+		if(timeToWait != null) {
+			if((msg.forward_date + timeToWait) > Date.now()) {
+				if(udata.timers.tram.status) {
+					let oldJob = await mainQueue.getJob(udata.timers.tram.jobId);
+					await oldJob.remove();
+				}
+				log("#New_tram_from #id" + uid);
+				let timeToDelay = msg.forward_date - Date.now() + timeToWait + 20000;
+				
+				let job = await mainQueue.add({
+					type: "tram",
+					uid: uid
+				}, {
+					delay: timeToDelay,
+					removeOnComplete: true
+				});
+		
+				udata.timers.tram.status = true;
+				udata.timers.tram.jobId = job.id;
+				
+				await bot.sendMessage(uid, await db.strings.get("tram_report_accepted"));
+				await db.users.set(udata);
+			} else {
+				await bot.sendMessage(uid, await db.strings.get("old_tram_message"));
 			}
 		}
 	}

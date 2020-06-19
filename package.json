@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/helvete666/swclock-bot.git"
+    "url": "git+https://gitlab.com/masterarthur/swclock-bot.git"
   },
   "keywords": [
     "telegram",
@@ -17,9 +17,9 @@
   "author": "MasterArthur",
   "license": "MIT",
   "bugs": {
-    "url": "https://gitlab.com/helvete666/swclock-bot/issues"
+    "url": "https://gitlab.com/masterarthur/swclock-bot/issues"
   },
-  "homepage": "https://gitlab.com/helvete666/swclock-bot#README",
+  "homepage": "https://gitlab.com/masterarthur/swclock-bot#README",
   "dependencies": {
     "bull": "^3.12.1",
     "dotenv": "^8.2.0",

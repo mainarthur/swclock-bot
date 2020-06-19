@@ -130,6 +130,10 @@ module.exports = function(db) {
 								status: false,
 								jobId: 0
 							},
+              tram: {
+                status: false,
+                jobId: 0
+              },
 							mandarin: {
 								status: false,
 								jobId: 0
