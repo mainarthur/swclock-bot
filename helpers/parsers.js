@@ -13,6 +13,7 @@ module.exports = {
 	isMouse: require("./parsers/mouse.js"),
 	isDog: require("./parsers/dog.js"),
 	petTime: require("./parsers/petTime.js"),
+	isPetChange: require("./parsers/pet_change"),
 	
 	// Транспорт
 	isCar: require("./parsers/car.js"),

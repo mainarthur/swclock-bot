@@ -114,6 +114,10 @@ module.exports = function(db) {
 								status: false,
 								jobId: 0
 							},
+							petChange: {
+								status: false,
+								jobId: 0
+							},
 							bicycle: {
 								status: false,
 								jobId: 0
