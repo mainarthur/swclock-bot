@@ -15,6 +15,7 @@
 {"id":"prodavan_timer_label","value":"👨Продаван","_id":"BQMAbPPCg2HRtTam"}
 {"id":"you_died","value":"Вы сдохли","_id":"C6jX43XFn1GdGhrB"}
 {"id":"trac_report_accepted","value":"Таймер для 🚜Трактора запущен","_id":"Cwxw0tusltK3Lyzh"}
+{"id":"petChange_timer_label","value":"🔄Изменение пета","_id":"DzRCy7mqLv4HKoLp"}
 {"id":"bicycle_timer_label","value":"🚲Велосипед","_id":"ENm8u85vbe7Z9GMd"}
 {"id":"factory_disabled","value":"Вы отписались от уведомлений на фабрику","_id":"FYyUkElIFmGRL5mv"}
 {"id":"old_dog_message","value":"Ваша 🐕Собачка уже отдохнула после апа","_id":"GXASawa9IFikcbI0"}
@@ -85,5 +86,3 @@
 {"id":"factory","value":"⚔Фабрика","_id":"zRCDJnYXTdcAXIkP"}
 {"id":"already_parsed","value":"Я уже получал этот отчет!","_id":"zayg361mXKVwQSJL"}
 {"id":"metro_label","value":"Метро:","_id":"zbI9cOoAEUwm5sOV"}
-{"id":"petChange_timer_label","value":"🔄","_id":"DzRCy7mqLv4HKoLp"}
-{"id":"petChange_timer_label","value":"🔄Изменение пета","_id":"DzRCy7mqLv4HKoLp"}

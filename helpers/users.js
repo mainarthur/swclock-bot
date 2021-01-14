@@ -3,25 +3,25 @@ const userToString = require("./userToString.js");
 
 const log = require("./log.js");
 
-module.exports = function(db) {
+module.exports = function (db) {
 	return {
 		_db: db,
-		
-		add: async function(user) {
+
+		add: async function (user) {
 			try {
 				let uid = user.id;
 				let udata = await this.get(uid);
 				formatUdata(user)
-				if(udata != null) {
+				if (udata != null) {
 					let uinfo = udata.userinfo;
-					
-					if(uinfo.first_name != user.first_name ||
-					   uinfo.last_name != user.last_name ||
-					   uinfo.username != user.username ) {
-			
+
+					if (uinfo.first_name != user.first_name ||
+						uinfo.last_name != user.last_name ||
+						uinfo.username != user.username) {
+
 						udata.userinfo = user;
 						await this._db.update({ uid: uid }, udata);
-						
+
 					}
 				} else {
 					udata = {
@@ -59,6 +59,12 @@ module.exports = function(db) {
 									blue: 0,
 									red: 0,
 									whiteLamp: 0
+								},
+								items: {
+									'screen': 0,
+									'circuit': 0,
+									'blade': 0,
+									'rings': 0
 								}
 							},
 							suicides: 0,
@@ -134,10 +140,10 @@ module.exports = function(db) {
 								status: false,
 								jobId: 0
 							},
-              tram: {
-                status: false,
-                jobId: 0
-              },
+							tram: {
+								status: false,
+								jobId: 0
+							},
 							mandarin: {
 								status: false,
 								jobId: 0
@@ -164,58 +170,58 @@ module.exports = function(db) {
 							}
 						}
 					};
-					
+
 					log(userToString(udata.userinfo) + "[#id" + uid + "][" + ((await this._db.count({})) + 1) + "] added to db at " + new Date().toString())
 					await this._db.insert(udata);
 				}
 				return udata;
-			} catch(e) {
+			} catch (e) {
 				console.log(e);
 				return null;
 			}
 		},
-		
-		set: async function(udata) {
+
+		set: async function (udata) {
 			try {
 				let uid = udata.uid;
-				await this._db.update({ uid: uid }, udata, { upsert : true});
+				await this._db.update({ uid: uid }, udata, { upsert: true });
 				return true;
-			} catch(e) {
+			} catch (e) {
 				console.log(e);
 				return false;
 			}
 		},
-		
-		get: async function(id) {
+
+		get: async function (id) {
 			try {
 				var udata = await this._db.findOne({ uid: id });
-				if(udata != null)
+				if (udata != null)
 					return udata
-				else 
+				else
 					return null;
-			} catch(e) {
+			} catch (e) {
 				console.log(e);
 				return null;
 			}
 		},
-		
-		forEach: async function(f) {
-			if(f == null)
+
+		forEach: async function (f) {
+			if (f == null)
 				return;
 			var all_users = await this._db.find({});
-			for(let i = 0; i < all_users.length; i++) {
-				if(f.constructor.name == "Function")
+			for (let i = 0; i < all_users.length; i++) {
+				if (f.constructor.name == "Function")
 					f(all_users[i]);
-				else if(f.constructor.name == "AsyncFunction")
+				else if (f.constructor.name == "AsyncFunction")
 					await f(all_users[i]);
 			}
-		}, 
-		
-		count: async function() {
+		},
+
+		count: async function () {
 			return await this._db.count({});
 		},
-		
-		all: async function() {
+
+		all: async function () {
 			return await this._db.find({});
 		}
 	}

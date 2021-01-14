@@ -23,6 +23,13 @@ var upgrades = {
 	'red': /🔴\sУлучшения:\s\+(\d+)\n/
 }
 
+var items = {
+	'screen': /📟Экран/,
+	'circuit': /📟Плата/,
+	'blade': /✂️Лезвие/,
+	'rings': /✂️Колечко/
+}
+
 module.exports = function(text) {
 	if(text == null || typeof text != "string")
 		return null;
@@ -35,7 +42,8 @@ module.exports = function(text) {
 			statistics: {
 				boxes: {},
 				upgrades: {},
-				details: {}
+				details: {},
+				items: {}
 			}
 		}
 		
@@ -109,7 +117,31 @@ module.exports = function(text) {
 				res.statistics.boxes[regexes[i]] = 1;
 			}
 		}
+
+
+		regexes = Object.keys(boxes);
 		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = boxes[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				res.statistics.boxes[regexes[i]] = 1;
+			}
+		}
+		
+
+		regexes = Object.keys(items);
+		
+		for(let i = 0; i < regexes.length; i++) {
+			let reg = items[regexes[i]];
+			
+			let m = text.match(reg);
+			if(m != null) {
+				res.statistics.items[regexes[i]] = 1;
+			}
+		}
+
 		return res;
 	} else {
 		return null;

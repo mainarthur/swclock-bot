@@ -25,6 +25,17 @@ const log = require("./helpers/log.js");
 
 			await db.users.set(udata);
 		}
+
+		if (udata.statistics.prodavans.items == null) {
+			udata.statistics.prodavans.items = {
+				'screen': 0,
+				'circuit': 0,
+				'blade': 0,
+				'rings': 0
+			}
+
+			await db.users.set(udata);
+		}
 	});
 	await bot.startPolling();
 	log("Bot started at " + new Date().toString());
@@ -119,7 +130,10 @@ async function answerCommand(msg, udata, match) {
 			answer += "📚" + knowledge + " ⚙" + (details.standart + details.VIP) + "\n";
 			answer += "🎁" + (boxes.standart + boxes.lamp) + " ⚪" + (upgrades.white + upgrades.whiteLamp) + "\n";
 			answer += "🔵" + upgrades.blue + " 🔴" + upgrades.red + "\n";
-
+			answer += "✂️Колечки: " + items.rings + " ";
+			answer += "✂️Лезвия: " + items.blade + "\n";
+			answer += "📟Экраны: " + items.screen + " ";
+			answer += "📟Платы: " + items.circuit + "\n";
 		}
 		answer += "/prodavans\n\n";
 
@@ -153,6 +167,14 @@ async function answerCommand(msg, udata, match) {
 			answer += "Улучшения:\n├ ⚪: " + upgrades.white + "\n";
 			answer += "├ ⚪🔦: " + upgrades.whiteLamp;
 			answer += "\n├ 🔵: " + upgrades.blue + "\n└ 🔴: " + upgrades.red + "\n";
+			answer += "✂️Ножницы:\n";
+			answer += "├Колечки: " + items.rings + "\n";
+			answer += "└Лезвия: " + items.blade + "\n";
+			answer += "📟Декодер:\n"
+			answer += "├Экраны: " + items.screen + "\n";
+			answer += "└Платы: " + items.circuit + "\n";
+
+
 
 		}
 
@@ -979,6 +1001,33 @@ async function checkMessage(msg, udata) {
 	// 
 	if (parsers.isBox(text)) {
 		let boxTimeToWait = parsers.boxTime(text);
+		if (udata.timers.box.status) {
+			let oldJob = await mainQueue.getJob(udata.timers.box.jobId);
+			await oldJob.remove();
+		}
+		if (boxTimeToWait != null && (msg.forward_date + boxTimeToWait) > Date.now()) {
+			let boxTimeToDelay = msg.forward_date - Date.now() + boxTimeToWait + 20000;
+
+			log("#new_box_from #id" + uid);
+			let boxJob = await mainQueue.add({
+				type: "box",
+				uid: uid
+			}, {
+				delay: boxTimeToDelay,
+				removeOnComplete: true
+			});
+
+			udata.timers.box.status = true;
+			udata.timers.box.jobId = boxJob.id;
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("box_report_accepted"));
+		} else {
+			await bot.sendMessage(uid, await db.strings.get("old_box_message"));
+		}
+	}
+
+	if (parsers.isGorbushkaBox(text)) {
+		let boxTimeToWait = 24 * 60 * 60 * 1000;
 		if (udata.timers.box.status) {
 			let oldJob = await mainQueue.getJob(udata.timers.box.jobId);
 			await oldJob.remove();
