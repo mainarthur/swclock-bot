@@ -74,6 +74,7 @@ bot.on('message', async (msg) => {
 
 });
 
+// @ts-ignore
 async function answerCommand(msg, udata, match) {
 	let { uid } = udata;
 	let { command, args } = match;
@@ -124,6 +125,7 @@ async function answerCommand(msg, udata, match) {
 		}
 		answer += await db.strings.get("prodavans_label") + "\n";
 
+		// @ts-ignore
 		with (prodavans) { // 
 			answer += "⚔" + victories + " 🤬" + defeats + "\n";
 			answer += "💡" + experience + " 💵" + money + "\n";
@@ -139,6 +141,7 @@ async function answerCommand(msg, udata, match) {
 
 		answer += await db.strings.get("metro_label");
 
+		// @ts-ignore
 		with (metro) {
 			answer += "🚇" + (atime + intime) + " (" + intime + "/" + atime + ") \n🕳" + tokens + " 💵" + money + "\n";
 			answer += "📚" + knowledge + " ⚙" + details + " 🔩" + bolts + "\n";
@@ -153,6 +156,7 @@ async function answerCommand(msg, udata, match) {
 		let answer = await db.strings.get("prodavans_label") + "\n\n";
 
 		let { prodavans } = udata.statistics;
+		// @ts-ignore
 		with (prodavans) { // 
 			answer += "⚔ Победы: " + victories + "\n";
 			answer += "🤬 Поражения: " + defeats + "\n";
@@ -301,6 +305,7 @@ async function answerCommand(msg, udata, match) {
 			let s = udata.statistics.suicides;
 			answer += `#${yourPos + 1} <b>${ui.first_name + (ui.last_name == null ? "" : " " + ui.last_name)}</b>: ${s}\n`
 		}
+		// @ts-ignore
 		await bot.sendMessage(uid, answer, { parse_mode: "html" });
 	}
 
@@ -331,6 +336,7 @@ async function answerCommand(msg, udata, match) {
 						continue;
 					}
 					answer += await db.strings.get(timersKeys[i] + "_timer_label") + "\n";
+					// @ts-ignore
 					let timeToAlert = j.timestamp + j.delay - Date.now();
 
 					answer += "├ через: " + timePrinter.print(timeToAlert) + "\n";
@@ -342,6 +348,7 @@ async function answerCommand(msg, udata, match) {
 		}
 	}
 
+	// @ts-ignore
 	if (command.indexOf("stop_") == 0 & command != "stop_") {
 		let timerName = command.substr(5);
 
@@ -621,6 +628,7 @@ async function checkMessage(msg, udata) {
 	//
 	// Проверка на метро
 	//
+	// @ts-ignore
 	match = parsers.metro(text);
 	if (match != null) {
 		let hash = messageHash(msg);
@@ -631,7 +639,7 @@ async function checkMessage(msg, udata) {
 		}
 
 
-		let timeToWait = 15 * 60 * 60 * 1000;
+		let timeToWait = 16 * 60 * 60 * 1000;
 		if (timeToWait != null && (msg.forward_date + timeToWait) > Date.now()) {
 			let timeToDelay = timeToWait + 20000;
 
