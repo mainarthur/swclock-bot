@@ -8,6 +8,7 @@
 {"id":"book_report_accepted","value":"📒Книжка принята","_id":"5K5EocBbMphDQnYS"}
 {"id":"old_mandarin_message","value":"Вы уже можете подарить 🍊Мандаринки","_id":"8ACwpCefpskJtlNP"}
 {"id":"book_timer_already_in","value":"Таймер с 📒Книжкой уже запущен","_id":"8gCWLIgqQ1anf18i"}
+{"id":"labStart_is_ready","value":"Время продавать ученых!","_id":"8mayGd34TmJndZs2"}
 {"id":"box_timer_already_in","value":"Таймер с 🎁Коробочкой уже запущен","_id":"8zcQBUPJFrJ6LGzb"}
 {"id":"prodavan_was_added_to_db","value":"Отчет о битве с 👨Продаваном добавлен в статистику","_id":"A7NM0yfvjlMZgeJB"}
 {"id":"box_timer_label","value":"🎁Коробочка","_id":"ALxJyx7jMq5G5grj"}
@@ -30,6 +31,7 @@
 {"id":"graveyard_title","value":"<b>Топ суицидников:</b>","_id":"OMCD2wtSgubhzdXl"}
 {"id":"factory_enabled","value":"Вы подписались на уведомления фабрики","_id":"P0F11ASowHERJPC2"}
 {"id":"my_timers_label","value":"Ваши таймеры:","_id":"QjUv1lXDSOaK4K6P"}
+{"id":"lab_disabled","value":"Вы отписались от уведомления наёма ученых","_id":"QpDBt1bLjnhmA9Zv"}
 {"id":"metro_accepted","value":"Отчет о выходе из 🚇Метро принят","_id":"RTBL5A7Kfgkm6rpO"}
 {"id":"dog_timer_label","value":"🐕Собака","_id":"SAqPQDsPm7fn57Qp"}
 {"id":"timer_stopped","value":"Таймер остановлен. Вы не получите уведомления","_id":"SdRj3OWOgq5lAqWb"}
@@ -40,6 +42,8 @@
 {"id":"bicycle_is_ready","value":"Вы можете прокатиться на 🚲Велосипеде","_id":"U7URsrOP5AlE4uSt"}
 {"id":"govnokat_timer_label","value":"🛴Говнокат","_id":"USkEgR7llln6O4eS"}
 {"id":"custom_timer_started","value":"Кастомный таймер запущен","_id":"VTBbDFw8Gq46HmEL"}
+{"id":"lab_text","value":"🔬Ученые\n\nСтатус: {0}\n\nПодписаться на уведомления: /lab_on\nОтписаться: /lab_off","_id":"WQac1B0rdQJQBafB"}
+{"id":"labEnd_is_ready","value":"Время нанимать ученых!","_id":"Yh2oWRnS742QnJSc"}
 {"id":"govnokat_is_ready","value":"Ваш 🛴Говнокат зарядился","_id":"ZOtsZTbfpruAez7v"}
 {"id":"timer_isnt_on","value":"Такой таймер не запущен","_id":"ajA0wH9Mk4MK6LY6"}
 {"id":"bycicle_timer_label","value":"🚲Велосипед","_id":"bDHoW6mwzMglMnaK"}
@@ -50,6 +54,7 @@
 {"id":"metro_is_ready","value":"Вход в заброшенное 🚇Метро открылся","_id":"eCIP3dEZrrVWo2gF"}
 {"id":"old_box_message","value":"Старое сообщение с 🎁Коробочкой","_id":"eNhKC7ryxl4IVUez"}
 {"id":"custom_timer_label","value":"⚙Кастомный таймер","_id":"eSs66AUFlSUWwsMV"}
+{"id":"lab_enabled","value":"Вы подписались на уведомления ученых","_id":"fR6gfxcEee20jXYl"}
 {"id":"old_mouse_message","value":"Ваша 🐀Мышь уже отдохнула после апа","_id":"fWq5M4wVYEFrgBGg"}
 {"id":"dog_is_ready","value":"🐕Собачка готова к апдейтам!","_id":"gXFyhtRYMj4KlYAW"}
 {"id":"book_is_ready","value":"Вы можете прочитать еще одну 📒Книжку с опытом","_id":"i9iJFU3BgbV8qRJW"}
@@ -71,6 +76,7 @@
 {"id":"factoryEnd_is_ready","value":"Фабрика закончилась","_id":"tN3luRdkfmax2eEJ"}
 {"id":"mandarin_is_ready","value":"Вы можете подарить 🍊Мандаринку\n@mandarinkaSW","_id":"tSfFSZD672VTYaPd"}
 {"id":"factory_timer_already_stopped","value":"Вы не подписаны на уведомления начала и окончания битвы за фабрику","_id":"tfs4NmIIyjG6tZ8V"}
+{"id":"lab_timer_already_stopped","value":"Вы не подписаны на уведомления наёма и увольнения ученых","_id":"uJX037b9GzUx8PKD"}
 {"id":"custom_timer_already_started","value":"Кастомный таймер уже запущен","_id":"uiGSZg9IfSCUYJEM"}
 {"id":"dog_timer_already_in","value":"Таймер 🐕собаки уже запущен","_id":"usXEn2oO45JqqfIY"}
 {"id":"car_is_ready","value":"Вы можете прокатиться на 🚕Ааавтомобиле","_id":"vRJb9R2HR8kL1GhD"}
@@ -86,3 +92,5 @@
 {"id":"factory","value":"⚔Фабрика","_id":"zRCDJnYXTdcAXIkP"}
 {"id":"already_parsed","value":"Я уже получал этот отчет!","_id":"zayg361mXKVwQSJL"}
 {"id":"metro_label","value":"Метро:","_id":"zbI9cOoAEUwm5sOV"}
+{"id":"lab_timer_already_in","value":"Вы уже подписаны на уведомления наёма и увольнения ученых","_id":"h8LNUEU1Yw1VQ7Tl"}
+{"id":"lab_enabled","value":"Вы подписались на уведомления наёма и увольнения ученых","_id":"fR6gfxcEee20jXYl"}

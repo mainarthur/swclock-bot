@@ -26,6 +26,8 @@ db.startupWarsIds = [
 db.repeatableTimers = [
 	"factoryStart",
 	"factoryEnd",
+	"labStart",
+	"labEnd",
 	"lotteryStart",
 	"lotteryEnd",
 	"battle"
@@ -39,7 +41,8 @@ db.constants = {
 
 module.exports = db;
 
-String.prototype.replaceAll = function(s, t) {
+// @ts-ignore
+String.prototype.replaceAll = function (s, t) {
 	return this.split(s).join(t);
 }
 

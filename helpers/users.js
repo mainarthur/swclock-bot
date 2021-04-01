@@ -104,6 +104,14 @@ module.exports = function (db) {
 								status: false,
 								jobId: 0
 							},
+							labStart: {
+								status: false,
+								jobId: 0
+							},
+							labEnd: {
+								status: false,
+								jobId: 0
+							},
 							prodavan: {
 								status: false,
 								jobId: 0

@@ -17,8 +17,12 @@ const log = require("./helpers/log.js");
 
 (async function () {
 	await db.users.forEach(async (udata) => {
-		if (udata.timers.petChange == null) {
-			udata.timers.petChange = {
+		if (udata.timers.labStart == null) {
+			udata.timers.labStart = {
+				status: false,
+				jobId: 0
+			}
+			udata.timers.labEnd = {
 				status: false,
 				jobId: 0
 			}
@@ -186,6 +190,84 @@ async function answerCommand(msg, udata, match) {
 	}
 
 
+	if (command == "lab") {
+		let answer = await db.strings.get("lab_text");
+
+		let statusEmoji = "⛔";
+		if (udata.timers.labStart.status) {
+			statusEmoji = "✅";
+		}
+
+		answer = answer.replace("{0}", statusEmoji);
+
+		await bot.sendMessage(uid, answer);
+	}
+
+	if (command == "lab_on") {
+		if (!udata.timers.labStart.status) {
+			// Запустить таймер
+			let startJob = await mainQueue.add({
+				uid: uid,
+				type: "labStart"
+			}, {
+				repeat: {
+					cron: "30 23 * * *"
+				},
+				jobId: 'labStart' + uid
+			});
+
+			let endJob = await mainQueue.add({
+				uid: uid,
+				type: "labEnd"
+			}, {
+				repeat: {
+					cron: "5 0 * * *"
+				},
+				jobId: 'labEnd' + uid
+			});
+
+			log("#lab_on #id" + uid);
+
+			udata.timers.labStart.status = true;
+			udata.timers.labStart.jobId = startJob.id;
+
+			udata.timers.labEnd.status = true;
+			udata.timers.labEnd.jobId = endJob.id;
+
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("lab_enabled"));
+		} else {
+			// Таймер уже запущен
+			await bot.sendMessage(uid, await db.strings.get("lab_timer_already_in"));
+		}
+	}
+
+	if (command == "lab_off") {
+		if (udata.timers.labStart.status) {
+			// Выключить таймер
+			let startJob = await mainQueue.getJob(udata.timers.labStart.jobId);
+			if (startJob != null)
+				await mainQueue.removeRepeatable(startJob.opts.repeat)
+
+			let endJob = await mainQueue.getJob(udata.timers.labEnd.jobId);
+			if (endJob != null)
+				await mainQueue.removeRepeatable(endJob.opts.repeat)
+
+			udata.timers.labStart.status = false;
+			udata.timers.labStart.jobId = 0;
+
+			udata.timers.labEnd.status = false;
+			udata.timers.labEnd.jobId = 0;
+
+			log("#lab_off #id" + uid);
+
+			await db.users.set(udata);
+			await bot.sendMessage(uid, await db.strings.get("lab_disabled"));
+		} else {
+			// Таймер уже выключен
+			await bot.sendMessage(uid, await db.strings.get("lab_timer_already_stopped"));
+		}
+	}
 
 	if (command == "factory") {
 		let answer = await db.strings.get("factory_text");
