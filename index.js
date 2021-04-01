@@ -650,10 +650,6 @@ async function checkMessage(msg, udata) {
 			objectsSummator(udata.statistics.prodavans, match.statistics);
 		}
 
-		if (udata.hero.level > 58) {
-			log(`${udata.hero.corp}${udata.hero.nickname}(${udata.hero.level}) #id${uid} #kaluga`)
-		}
-
 		let timeToWait = parsers.prodavanTime(text);
 
 
