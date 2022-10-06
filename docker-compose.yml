@@ -1,0 +1,21 @@
+version: "3.4"
+
+services:
+  bot:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      BOT_TOKEN: ""
+      ADMIN_ID: 123
+      LOG_CHAT_ID: -123
+      LOG_BOT_TOKEN: ""
+    entrypoint: node index.js
+    volumes:
+      - .:/app
+
+  redis:
+    image: redis
+    expose:
+      - 6379

@@ -4,8 +4,8 @@ const db = require("./helpers/db.js");
 const Bull = require("bull");
 const userToString = require("./helpers/userToString.js");
 
-const mainQueue = new Bull("swclock");
-const botQueue = new Bull("swclock-bot-messages", {
+const mainQueue = new Bull("swclock", process.env.REDIS_URL);
+const botQueue = new Bull("swclock-bot-messages", process.env.REDIS_URL, {
 	limiter: {
 		max: 30,
 		duration: 1000
